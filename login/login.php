@@ -10,7 +10,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $password = $_POST["password"];
     $password = hash('sha256', $password);
 
-    $sql = "SELECT user_id, role_id FROM users WHERE email = ? AND password_hash = ?";
+    $sql = "SELECT * FROM users WHERE email = ? AND password_hash = ?";
     $stmt = mysqli_prepare($conn, $sql);
 
     mysqli_stmt_bind_param($stmt, "ss", $email, $password);
@@ -22,6 +22,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $row = mysqli_fetch_assoc($result);
         $_SESSION['user_id'] = $row['user_id'];
         $_SESSION['role_id'] = $row['role_id'];
+        $_SESSION['first_name'] = $row['first_name'];
+        $_SESSION['last_name'] = $row['last_name'];
+        $_SESSION['email'] = $row['email'];
+        $_SESSION['created_at'] = $row['created_at'];
 
         if($_SESSION['role_id'] == 1){
             header("Location: ../admin/home.php");
