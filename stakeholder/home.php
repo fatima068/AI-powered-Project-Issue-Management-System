@@ -18,32 +18,39 @@ if ($_SESSION['role_id'] != 5) {
 </head>
 <body class="bg-light">
 <div class="container py-5">
-    <h1 class="mb-4 text-center text-info">Stakeholder Dashboard</h1>
+    <h1 class="text-center text-info mb-3">Stakeholder Dashboard</h1>
     <p class="text-center">Welcome, <?php echo $_SESSION['first_name']; ?>!</p>
+    <div class="row g-4 mt-4 justify-content-center">
+        <div class="col-md-4">
+            <div class="card shadow text-center p-4">
+                <h5>Project Overview</h5>
+                <p class="text-muted">View projects and progress</p>
+                <button onclick="location.href='project_overview.php'" 
+                class="btn btn-info mt-2">
+                Open
+                </button>
+            </div>
+        </div>
 
-    <div class="row g-3 mt-4">
         <div class="col-md-4">
-            <div class="card shadow-sm text-center p-3">
-                <h6>Project Overview</h6>
-                <button onclick="location.href='project_overview.php'" class="btn btn-info mt-2">Go</button>
+            <div class="card shadow text-center p-4">
+                <h5>Project Reports</h5>
+                <p class="text-muted">Generate project reports</p>
+                <button onclick="location.href='project_reports.php'" 
+                class="btn btn-info mt-2">
+                Open
+                </button>
             </div>
         </div>
+
         <div class="col-md-4">
-            <div class="card shadow-sm text-center p-3">
-                <h6>Project Reports</h6>
-                <button onclick="location.href='project_reports.php'" class="btn btn-info mt-2">Go</button>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm text-center p-3">
-                <h6>Activity Logs</h6>
-                <button onclick="location.href='activity_logs.php'" class="btn btn-info mt-2">Go</button>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm text-center p-3">
-                <h6>Milestone Status</h6>
-                <button onclick="location.href='milestone_status.php'" class="btn btn-info mt-2">Go</button>
+            <div class="card shadow text-center p-4">
+                <h5>Project Progress</h5>
+                <p class="text-muted">View task and issue statistics</p>
+                <button onclick="location.href='project_progress.php'" 
+                class="btn btn-info mt-2">
+                Open
+                </button>
             </div>
         </div>
     </div>
