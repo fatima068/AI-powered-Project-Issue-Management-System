@@ -6,7 +6,7 @@ if ($_SESSION['role_id'] != '1') {
     header('Location: ../index.php');
     exit;
 }
-$users = mysqli_query($conn," SELECT u.user_id, u.first_name, u.last_name, u.email, r.role_name
+$users = mysqli_query($conn," SELECT u.user_id, u.first_name, u.last_name, u.email, u.role_id, r.role_name
 FROM users u
 JOIN roles r ON u.role_id = r.role_id
 order by u.user_id ");
@@ -151,6 +151,40 @@ order by u.user_id ");
                                 <div class="modal-body">
                                     <input type="hidden" name="user_id" value="<?php echo $row['user_id']; ?>">
                                     <p>Are you sure you want to delete this user?</p>
+
+                                    <?php
+                                    // Check if the user has dependent records
+                                    $user_id = $row['user_id'];
+                                    $role_id = $row['role_id'];
+
+                                    $hasDeps = false;
+
+                                    // Check projectmembers
+                                    $pmCheck = mysqli_query($conn,"SELECT COUNT(*) as cnt FROM projectmembers WHERE user_id = $user_id");
+                                    if(mysqli_fetch_assoc($pmCheck)['cnt'] > 0) $hasDeps = true;
+
+                                    // Check tasks
+                                    $taskCheck = mysqli_query($conn,"SELECT COUNT(*) as cnt FROM tasks WHERE assigned_to = $user_id");
+                                    if(mysqli_fetch_assoc($taskCheck)['cnt'] > 0) $hasDeps = true;
+
+                                    // Check issues
+                                    $issueCheck = mysqli_query($conn,"SELECT COUNT(*) as cnt FROM issues WHERE assigned_to = $user_id");
+                                    if(mysqli_fetch_assoc($issueCheck)['cnt'] > 0) $hasDeps = true;
+
+                                    if($hasDeps){
+                                        echo '<div class="mb-2">
+                                                <label class="form-label">Replacement User (Same Role)</label>
+                                                <select name="replacement_user_id" class="form-select" required>
+                                                    <option value="">Select replacement</option>';
+
+                                        $replacements = mysqli_query($conn,"SELECT user_id, first_name, last_name FROM users WHERE role_id = $role_id AND user_id != $user_id");
+                                        while($rep = mysqli_fetch_assoc($replacements)){
+                                            echo "<option value='{$rep['user_id']}'>{$rep['first_name']} {$rep['last_name']}</option>";
+                                        }
+
+                                        echo '</select></div>';
+                                    }
+                                    ?>
                                 </div>
 
                                 <div class="modal-footer">
