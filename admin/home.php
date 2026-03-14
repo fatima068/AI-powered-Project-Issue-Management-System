@@ -42,20 +42,20 @@ if ($_SESSION['role_id'] != 1) {
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm text-center p-3">
-                <h5 class="card-title">Reports</h5>
-                <button onclick="location.href='project_reports.php'" class="btn btn-primary mt-2">Go</button>
+                <h5 class="card-title">Manage Project Members</h5>
+                <button onclick="location.href='manage_project_members.php'" class="btn btn-primary mt-2">Go</button>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm text-center p-3">
-                <h5 class="card-title">Activity Logs</h5>
-                <button onclick="location.href='activity_logs.php'" class="btn btn-primary mt-2">Go</button>
+                <h5 class="card-title">Comments</h5>
+                <button onclick="location.href='manage_comments.php'" class="btn btn-primary mt-2">Go</button>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm text-center p-3">
-                <h5 class="card-title">System Settings</h5>
-                <button onclick="location.href='../services/settings.php'" class="btn btn-primary mt-2">Go</button>
+                <h5 class="card-title">Monitoring & Reports</h5>
+                <button onclick="location.href='monitoring_reports.php'" class="btn btn-primary mt-2">Go</button>
             </div>
         </div>
     </div>

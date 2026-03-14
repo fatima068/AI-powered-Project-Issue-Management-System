@@ -98,6 +98,18 @@ order by u.user_id ");
                                         <label class="form-label">Email</label>
                                         <input type="email" class="form-control" name="email" value="<?php echo $row['email']; ?>">
                                     </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Role</label>
+                                        <select name="role_id" class="form-select">
+                                            <?php
+                                            $roles = mysqli_query($conn,"SELECT * FROM roles");
+                                            while($role = mysqli_fetch_assoc($roles)){
+                                                $selected = ($role['role_id'] == $row['role_id']) ? "selected" : "";
+                                                echo "<option value='{$role['role_id']}' $selected>{$role['role_name']}</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div class="modal-footer">
