@@ -95,22 +95,66 @@ $roles = mysqli_query($conn,"SELECT * FROM roles ORDER BY role_id");
                 <div class="modal fade" id="deleteRoleModal<?php echo $row['role_id']; ?>">
                     <div class="modal-dialog">
                         <div class="modal-content">
-                        <form action="delete_role.php" method="POST">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Delete Role</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
+                            <form class="delete-role-form" action="/Project-Issue-Management-System/admin/delete_role.php" method="POST">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Delete Role</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
 
-                            <div class="modal-body">
-                                <input type="hidden" name="role_id" value="<?php echo $row['role_id']; ?>">
-                                <p>Are you sure you want to delete this role?</p>
-                            </div>
+                                <div class="modal-body">
+                                    <input type="hidden" name="role_id" value="<?php echo $row['role_id']; ?>">
+                                    <p>Are you sure you want to delete the role <strong><?php echo htmlspecialchars($row['role_name']); ?></strong>?</p>
 
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-danger">Delete</button>
-                            </div>
-                        </form>
+                                    <?php
+                                    // Check if role is in use
+                                    $stmt_pm = $conn->prepare("SELECT COUNT(*) FROM projectmembers WHERE role_id = ?");
+                                    $stmt_pm->bind_param("i", $row['role_id']);
+                                    $stmt_pm->execute();
+                                    $stmt_pm->bind_result($pm_count);
+                                    $stmt_pm->fetch();
+                                    $stmt_pm->close();
+
+                                    $stmt_u = $conn->prepare("SELECT COUNT(*) FROM users WHERE role_id = ?");
+                                    $stmt_u->bind_param("i", $row['role_id']);
+                                    $stmt_u->execute();
+                                    $stmt_u->bind_result($user_count);
+                                    $stmt_u->fetch();
+                                    $stmt_u->close();
+
+                                    $total_in_use = $pm_count + $user_count;
+
+                                    if($total_in_use > 0) {
+                                        echo '<div class="alert alert-warning">
+                                                This role is assigned to ' . $total_in_use . ' user(s) or project member(s). You must choose a replacement role before deletion.
+                                            </div>';
+
+                                        // Get replacement roles
+                                        $roles_list = mysqli_query($conn, "SELECT * FROM roles WHERE role_id != {$row['role_id']} ORDER BY role_name");
+                                        if(mysqli_num_rows($roles_list) > 0){
+                                            echo '<div class="mb-2">
+                                                    <label class="form-label">Replacement Role</label>
+                                                    <select name="replacement_role_id" class="form-select" required>
+                                                        <option value="">-- Select Replacement Role --</option>';
+                                            while($r = mysqli_fetch_assoc($roles_list)){
+                                                echo "<option value='{$r['role_id']}'>" . htmlspecialchars($r['role_name']) . "</option>";
+                                            }
+                                            echo '</select></div>';
+                                        } else {
+                                            echo '<div class="alert alert-danger">No other roles available. Cannot delete this role.</div>';
+                                            echo '<script>
+                                                    const submitBtn = document.querySelector("#deleteRoleModal'.$row['role_id'].' button[type=submit]");
+                                                    submitBtn.disabled = true;
+                                                </script>';
+                                        }
+                                    }
+                                    ?>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -158,4 +202,15 @@ $roles = mysqli_query($conn,"SELECT * FROM roles ORDER BY role_id");
         }, 2000);
     </script>
 </body>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForms = document.querySelectorAll('.delete-role-form');
+    deleteForms.forEach(function(form) {
+        form.addEventListener('submit', function() {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if(submitBtn) submitBtn.disabled = true;
+        });
+    });
+});
+</script>
 </html>

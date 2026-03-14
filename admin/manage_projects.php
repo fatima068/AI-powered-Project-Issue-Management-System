@@ -134,7 +134,38 @@ ORDER BY p.project_id");
 
                         <div class="modal-body">
                             <input type="hidden" name="project_id" value="<?php echo $row['project_id']; ?>">
-                            <p>Are you sure you want to delete this project?</p>
+                            <p>Are you sure you want to delete this project <strong><?php echo htmlspecialchars($row['project_name']); ?></strong>?</p>
+
+                            <?php
+                            $stmt_pm = $conn->prepare("SELECT COUNT(*) FROM projectmembers WHERE project_id = ?");
+                            $stmt_pm->bind_param("i", $row['project_id']);
+                            $stmt_pm->execute();
+                            $stmt_pm->bind_result($pm_count);
+                            $stmt_pm->fetch();
+                            $stmt_pm->close();
+
+                            $stmt_tasks = $conn->prepare("SELECT COUNT(*) FROM tasks WHERE project_id = ?");
+                            $stmt_tasks->bind_param("i", $row['project_id']);
+                            $stmt_tasks->execute();
+                            $stmt_tasks->bind_result($task_count);
+                            $stmt_tasks->fetch();
+                            $stmt_tasks->close();
+
+                            $stmt_issues = $conn->prepare("SELECT COUNT(*) FROM issues WHERE project_id = ?");
+                            $stmt_issues->bind_param("i", $row['project_id']);
+                            $stmt_issues->execute();
+                            $stmt_issues->bind_result($issue_count);
+                            $stmt_issues->fetch();
+                            $stmt_issues->close();
+
+                            $total_refs = $pm_count + $task_count + $issue_count;
+
+                            if($total_refs > 0){
+                                echo '<div class="alert alert-warning">
+                                        This project has ' . $total_refs . ' related project member(s), task(s), or issue(s). You can delete it, but associated records will remain.
+                                    </div>';
+                            }
+                            ?>
                         </div>
 
                         <div class="modal-footer">
