@@ -16,10 +16,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
     $stmt = $conn->prepare("UPDATE users 
-        SET first_name = ?, last_name = ?, email = ?, role_id = ?
-        WHERE user_id = ?");        
+    SET first_name = ?, last_name = ?, email = ?, role_id = ? WHERE user_id = ?");
+
     $stmt->bind_param("sssii", $first_name, $last_name, $email, $role_id, $user_id);
     if ($stmt->execute()) {
+        $admin_id = $_SESSION['user_id'];
+        $action = "Updated user: " . $email;
+        $log_stmt = $conn->prepare("INSERT INTO ActivityLog (user_id, action) VALUES (?, ?)");
+        $log_stmt->bind_param("is", $admin_id, $action);
+        $log_stmt->execute();
         header("Location: manage_users.php?updated=1");
         exit;
     } 

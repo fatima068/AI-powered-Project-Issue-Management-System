@@ -20,8 +20,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Enable mysqli exceptions
     $conn->report_mode = MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT;
-
-    // Begin transaction
     $conn->begin_transaction();
 
     try {
@@ -57,9 +55,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->execute();
         }
 
-        // 3️⃣ Delete the user
+        // Get email before deleting user
+        $stmt = $conn->prepare("SELECT email FROM users WHERE user_id = ?");
+        $stmt->bind_param("i", $deleted_user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+        $target_user_email = $user['email'];
+
         $stmt = $conn->prepare("DELETE FROM users WHERE user_id = ?");
         $stmt->bind_param("i", $deleted_user_id);
+        $stmt->execute();
+        $admin_id = $_SESSION['user_id'];
+        $log_action = "Deleted user: " . $target_user_email;
+
+        $stmt = $conn->prepare("INSERT INTO ActivityLog (user_id, action) VALUES (?, ?)");
+        $stmt->bind_param("is", $admin_id, $log_action);
         $stmt->execute();
 
         $conn->commit();

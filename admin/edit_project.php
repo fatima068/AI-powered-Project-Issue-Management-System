@@ -17,9 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
         exit;
     }
 
-    $stmt = $conn->prepare("UPDATE projects SET project_name=?, description=?, start_date=?, end_date=?, status_id=? WHERE project_id=?");
+    $stmt = $conn->prepare("UPDATE projects 
+                            SET project_name=?, description=?, start_date=?, end_date=?, status_id=? 
+                            WHERE project_id=?");
+
     $stmt->bind_param("ssssii", $project_name, $description, $start_date, $end_date, $status_id, $project_id);
     if ($stmt->execute()) {
+        $admin_id = $_SESSION['user_id'];
+        $action = "Updated project: " . $project_name;
+        $log_stmt = $conn->prepare("INSERT INTO ActivityLog (user_id, action) VALUES (?, ?)");
+        $log_stmt->bind_param("is", $admin_id, $action);
+        $log_stmt->execute();
         header("Location: manage_projects.php?updated=1");
         exit;
     } else {

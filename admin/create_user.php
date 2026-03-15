@@ -23,12 +23,17 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $stmt->bind_param("ssssi", $first_name, $last_name, $email, $password, $role_id);
 
     if($stmt->execute()){
+        $new_user_id = $conn->insert_id;
+        $admin_id = $_SESSION['user_id'];
+        $action = "Created user: " . $email;
+        $log_stmt = $conn->prepare("INSERT INTO ActivityLog (user_id, action) VALUES (?, ?)");
+        $log_stmt->bind_param("is", $admin_id, $action);
+        $log_stmt->execute();
         header("Location: manage_users.php?created=1");
         exit;
-    }
-    else {
+    } else {
         header("Location: manage_users.php?create_error=1");
         exit;
-    };
+    }
 }
 ?>

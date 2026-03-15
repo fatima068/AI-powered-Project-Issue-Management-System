@@ -16,6 +16,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $stmt = $conn->prepare("INSERT INTO roles(role_name, description) VALUES (?, ?)");
     $stmt->bind_param("ss", $role_name, $description);
     if($stmt->execute()){
+        $admin_id = $_SESSION['user_id'];
+        $action = "Created role: " . $role_name;
+        $log_stmt = $conn->prepare("INSERT INTO ActivityLog (user_id, action) VALUES (?, ?)");
+        $log_stmt->bind_param("is", $admin_id, $action);
+        $log_stmt->execute();
         header("Location: manage_roles.php?created=1");
         exit;
     } else {

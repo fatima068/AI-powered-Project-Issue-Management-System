@@ -161,9 +161,7 @@ ORDER BY p.project_id");
                             $total_refs = $pm_count + $task_count + $issue_count;
 
                             if($total_refs > 0){
-                                echo '<div class="alert alert-warning">
-                                        This project has ' . $total_refs . ' related project member(s), task(s), or issue(s). You can delete it, but associated records will remain.
-                                    </div>';
+                                echo '<div class="alert alert-warning">This project has ' . $total_refs . ' related project member(s), task(s), or issue(s). If you delete it, all the associated records will also be deleted.</div>';
                             }
                             ?>
                         </div>

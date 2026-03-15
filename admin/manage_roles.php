@@ -95,7 +95,7 @@ $roles = mysqli_query($conn,"SELECT * FROM roles ORDER BY role_id");
                 <div class="modal fade" id="deleteRoleModal<?php echo $row['role_id']; ?>">
                     <div class="modal-dialog">
                         <div class="modal-content">
-                            <form class="delete-role-form" action="/Project-Issue-Management-System/admin/delete_role.php" method="POST">
+                            <form class="delete-role-form" action="delete_role.php" method="POST">
                                 <div class="modal-header">
                                     <h5 class="modal-title">Delete Role</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

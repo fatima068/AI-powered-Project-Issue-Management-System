@@ -58,6 +58,12 @@ if ($_SESSION['role_id'] != 1) {
                 <button onclick="location.href='monitoring_reports.php'" class="btn btn-primary mt-2">Go</button>
             </div>
         </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center p-3">
+                <h5 class="card-title">View Activity Logs & Status History</h5>
+                <button onclick="location.href='view_activity_logs.php'" class="btn btn-primary mt-2">Go</button>
+            </div>
+        </div>
     </div>
 </div>
 </body>
