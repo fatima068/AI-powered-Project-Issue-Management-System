@@ -30,25 +30,19 @@ if ($_SESSION['role_id'] != 3) {
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm text-center p-3">
-                <h6>Update Task Status</h6>
-                <button onclick="location.href='update_task_status.php'" class="btn btn-dark mt-2">Go</button>
+                <h6>My Issues</h6>
+                <button onclick="location.href='my_issues.php'" class="btn btn-dark mt-2">Go</button>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm text-center p-3">
-                <h6>Add Task Comments</h6>
-                <button onclick="location.href='add_task_comments.php'" class="btn btn-dark mt-2">Go</button>
+                <h6>My Project</h6>
+                <button onclick="location.href='my_projects.php'" class="btn btn-dark mt-2">Go</button>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm text-center p-3">
-                <h6>Project Overview</h6>
-                <button onclick="location.href='project_overview.php'" class="btn btn-dark mt-2">Go</button>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm text-center p-3">
-                <h6>My Activity Log</h6>
+                <h6>Activity Log & Status History</h6>
                 <button onclick="location.href='activity_logs.php'" class="btn btn-dark mt-2">Go</button>
             </div>
         </div>

@@ -24,20 +24,20 @@ if ($_SESSION['role_id'] != '2') {
     <div class="row g-3 mt-4">
         <div class="col-md-3">
             <div class="card shadow-sm text-center p-3">
-                <h6>Create Project</h6>
+                <h6>Create & Edit Projects</h6>
                 <button onclick="location.href='create_project.php'" class="btn btn-success mt-2">Go</button>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card shadow-sm text-center p-3">
-                <h6>Assign Members</h6>
-                <button onclick="location.href='assign_members.php'" class="btn btn-success mt-2">Go</button>
+                <h6>Create & Assign Tasks</h6>
+                <button onclick="location.href='create_tasks.php'" class="btn btn-success mt-2">Go</button>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card shadow-sm text-center p-3">
-                <h6>Assign Tasks</h6>
-                <button onclick="location.href='project_tasks.php'" class="btn btn-success mt-2">Go</button>
+                <h6>Create & Assign Issues</h6>
+                <button onclick="location.href='create_issues.php'" class="btn btn-success mt-2">Go</button>
             </div>
         </div>
         <div class="col-md-3">
@@ -46,12 +46,9 @@ if ($_SESSION['role_id'] != '2') {
                 <button onclick="location.href='project_reports.php'" class="btn btn-success mt-2">Go</button>
             </div>
         </div>
-    </div>
-
-    <div class="row g-3 mt-3">
-        <div class="col-md-6">
+        <div class="col-md-3">
             <div class="card shadow-sm text-center p-3">
-                <h6>Activity Logs</h6>
+                <h6>Activity Logs & Status History</h6>
                 <button onclick="location.href='activity_logs.php'" class="btn btn-success mt-2">Go</button>
             </div>
         </div>
