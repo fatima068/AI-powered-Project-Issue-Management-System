@@ -39,7 +39,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             header("Location: ../developer/home.php");
             exit();
         }
-        elseif($_SESSION['role_id'] == 5){
+        elseif($_SESSION['role_id'] == 4){
             header("Location: ../stakeholder/home.php");
             exit();
         }

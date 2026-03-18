@@ -48,20 +48,22 @@ order by u.user_id ");
         <table class="table table-striped">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>S.No</th>
                 <th>Name</th>
+                <th>User ID</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Actions</th>
             </tr>
         </thead>
-
+        <?php $srnum = 1; ?>
         <tbody>
             <?php if($users && mysqli_num_rows($users) > 0) {
                 while($row = mysqli_fetch_assoc($users)){?>
                     <tr>
-                        <td><?php echo $row['user_id']; ?></td>
+                        <td><?php echo $srnum++; ?></td>
                         <td><?php echo $row['first_name']." ".$row['last_name']; ?></td>
+                        <td><?php echo $row['user_id']; ?></td>
                         <td><?php echo $row['email']; ?></td>
                         <td><?php echo $row['role_name']; ?></td>
                         <td>

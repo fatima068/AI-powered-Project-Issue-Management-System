@@ -40,18 +40,21 @@ $roles = mysqli_query($conn,"SELECT * FROM roles ORDER BY role_id");
     <table class="table table-striped">
     <thead>
         <tr>
-            <th>ID</th>
+            <th>S.No</th>
             <th>Role Name</th>
+            <th>Role ID</th>
             <th>Description</th>
             <th>Actions</th>
         </tr>
     </thead>
+    <?php $srnum = 1; ?>
     <tbody>
         <?php if($roles && mysqli_num_rows($roles) > 0){
             while($row = mysqli_fetch_assoc($roles)){?>
                 <tr>
-                    <td><?php echo $row['role_id']; ?></td>
+                    <td><?php echo $srnum++; ?></td>
                     <td><?php echo $row['role_name']; ?></td>
+                    <td><?php echo $row['role_id']; ?></td>
                     <td><?php echo $row['description']; ?></td>
                     <td>
                         <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editRoleModal<?php echo $row['role_id']; ?>"> Edit </button>

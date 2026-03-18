@@ -42,21 +42,23 @@ ORDER BY p.project_id");
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Project Name</th>
+                <th>Project ID</th>
                 <th>Description</th>
+                <th>Project Name</th>
                 <th>Start Date</th>
                 <th>End Date</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
         </thead>
+        <?php $srnum = 1; ?>
         <tbody>
             <?php
             if($projects && mysqli_num_rows($projects) > 0){
                 while($row = mysqli_fetch_assoc($projects)){
                 ?>
             <tr>
+                
                 <td><?php echo $row['project_id']; ?></td>
                 <td><?php echo $row['project_name']; ?></td>
                 <td><?php echo $row['description']; ?></td>

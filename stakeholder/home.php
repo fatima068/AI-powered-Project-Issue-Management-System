@@ -3,7 +3,7 @@ session_start();
 include '../connect_db.php';
 include '../assets/homeNavBar.php';
 
-if ($_SESSION['role_id'] != 5) {
+if ($_SESSION['role_id'] != 4) {
     header('Location: ../index.php');
     exit;
 }

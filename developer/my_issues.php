@@ -8,26 +8,26 @@ if ($_SESSION['role_id'] != 3) {
 }
 
 $user_id = $_SESSION['user_id'];
-$tasks = mysqli_query($conn, "SELECT t.*, s.status_name, p.priority_name, pr.project_name 
-FROM tasks t
-LEFT JOIN status s ON t.status_id = s.status_id
-LEFT JOIN priority p ON t.priority_id = p.priority_id
-LEFT JOIN projects pr ON t.project_id = pr.project_id
-WHERE t.assigned_to = '$user_id'
-ORDER BY t.task_id DESC");
+$issues = mysqli_query($conn, "SELECT i.*, s.status_name, p.priority_name, pr.project_name
+FROM issues i
+LEFT JOIN status s ON i.status_id = s.status_id
+LEFT JOIN priority p ON i.priority_id = p.priority_id
+LEFT JOIN projects pr ON i.project_id = pr.project_id
+WHERE i.assigned_to = '$user_id'
+ORDER BY i.issue_id DESC");
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Tasks</title>
+    <title>My Issues</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body class="bg-light">
 <div class="container mt-4">
-    <h2>My Tasks</h2>
+    <h2>My Issues</h2>
     <table class="table table-striped mt-3">
         <thead>
             <tr>
@@ -36,15 +36,15 @@ ORDER BY t.task_id DESC");
                 <th>Project</th>
                 <th>Status</th>
                 <th>Priority</th>
-                <th>Due Date</th>
+                <th>Created</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <?php $srnum = 1; ?>
         <tbody>
         <?php
-        if ($tasks && mysqli_num_rows($tasks) > 0) {
-            while ($row = mysqli_fetch_assoc($tasks)) {
+        if ($issues && mysqli_num_rows($issues) > 0) {
+            while ($row = mysqli_fetch_assoc($issues)) {
         ?>
             <tr>
                 <td><?= $srnum++; ?></td>
@@ -52,24 +52,23 @@ ORDER BY t.task_id DESC");
                 <td><?= $row['project_name']; ?></td>
                 <td><?= $row['status_name']; ?></td>
                 <td><?= $row['priority_name']; ?></td>
-                <td><?= $row['due_date']; ?></td>
+                <td><?= $row['created_at']; ?></td>
                 <td>
                     <button class="btn btn-sm btn-primary"
                         data-bs-toggle="modal"
-                        data-bs-target="#viewTask<?= $row['task_id']; ?>">
+                        data-bs-target="#viewIssue<?= $row['issue_id']; ?>">
                         View
                     </button>
-
                     <button class="btn btn-sm btn-warning"
                         data-bs-toggle="modal"
-                        data-bs-target="#statusTask<?= $row['task_id']; ?>">
+                        data-bs-target="#statusIssue<?= $row['issue_id']; ?>">
                         Change Status
                     </button>
                 </td>
             </tr>
 
-            <!-- VIEW TASK MODAL -->
-            <div class="modal fade" id="viewTask<?= $row['task_id']; ?>">
+            <!-- VIEW ISSUE MODAL -->
+            <div class="modal fade" id="viewIssue<?= $row['issue_id']; ?>">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -77,24 +76,21 @@ ORDER BY t.task_id DESC");
                             <button class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <p><strong>Task ID:</strong> <?= $row['task_id']; ?></p>
+                            <p><strong>Issue ID:</strong> <?= $row['issue_id']; ?></p>
                             <p><strong>Description:</strong><br><?= $row['description']; ?></p>
                             <p><strong>Project:</strong> <?= $row['project_name']; ?></p>
                             <p><strong>Status:</strong> <?= $row['status_name']; ?></p>
                             <p><strong>Priority:</strong> <?= $row['priority_name']; ?></p>
-                            <p><strong>Due Date:</strong> <?= $row['due_date']; ?></p>
+                            <p><strong>Created At:</strong> <?= $row['created_at']; ?></p>
                             <hr>
                             <h6>Comments</h6>
                             <?php
-                            $task_id = $row['task_id'];
-                            $comments = mysqli_query($conn, "
-                                SELECT c.*, u.first_name, u.last_name
-                                FROM comments c
-                                JOIN users u ON c.user_id = u.user_id
-                                WHERE c.task_id = '$task_id'
-                                ORDER BY c.created_at DESC
+                            $issue_id = $row['issue_id'];
+                            $comments = mysqli_query($conn, "SELECT c.*, u.first_name, u.last_name FROM comments c
+                            JOIN users u ON c.user_id = u.user_id
+                            WHERE c.issue_id = '$issue_id'
+                            ORDER BY c.created_at DESC
                             ");
-
                             if(mysqli_num_rows($comments) > 0){
                                 while($c = mysqli_fetch_assoc($comments)){
                                     echo "<div class='border p-2 mb-2'>
@@ -103,13 +99,11 @@ ORDER BY t.task_id DESC");
                                             <small>{$c['created_at']}</small>
                                           </div>";
                                 }
-                            } else {
-                                echo "<p>No comments yet.</p>";
-                            }
+                            } else { echo "<p>No comments yet.</p>"; }
                             ?>
 
-                            <form action="add_comment.php" method="POST">
-                                <input type="hidden" name="task_id" value="<?= $row['task_id']; ?>">
+                            <form action="add_issue_comment.php" method="POST">
+                                <input type="hidden" name="issue_id" value="<?= $row['issue_id']; ?>">
                                 <div class="mt-2">
                                     <textarea name="comment_text" class="form-control" placeholder="Add comment..." required></textarea>
                                 </div>
@@ -121,16 +115,16 @@ ORDER BY t.task_id DESC");
             </div>
 
             <!-- CHANGE STATUS MODAL -->
-            <div class="modal fade" id="statusTask<?= $row['task_id']; ?>">
+            <div class="modal fade" id="statusIssue<?= $row['issue_id']; ?>">
                 <div class="modal-dialog">
                     <div class="modal-content">
-                    <form action="update_task_status.php" method="POST">
+                    <form action="update_issue_status.php" method="POST">
                         <div class="modal-header">
                             <h5 class="modal-title">Change Status</h5>
                             <button class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <input type="hidden" name="task_id" value="<?= $row['task_id']; ?>">
+                            <input type="hidden" name="issue_id" value="<?= $row['issue_id']; ?>">
                             <label>Status</label>
                             <select name="status_id" class="form-select">
                                 <?php
@@ -141,6 +135,7 @@ ORDER BY t.task_id DESC");
                                 ?>
                             </select>
                         </div>
+
                         <div class="modal-footer">
                             <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button class="btn btn-primary">Update</button>
