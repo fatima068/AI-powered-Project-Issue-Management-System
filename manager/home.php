@@ -24,8 +24,8 @@ if ($_SESSION['role_id'] != '2') {
     <div class="row g-3 mt-4">
         <div class="col-md-3">
             <div class="card shadow-sm text-center p-3">
-                <h6>Create & Edit Projects</h6>
-                <button onclick="location.href='create_project.php'" class="btn btn-success mt-2">Go</button>
+                <h6>Manage Projects</h6>
+                <button onclick="location.href='manage_projects.php'" class="btn btn-success mt-2">Go</button>
             </div>
         </div>
         <div class="col-md-3">
