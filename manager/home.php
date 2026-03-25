@@ -31,13 +31,13 @@ if ($_SESSION['role_id'] != '2') {
         <div class="col-md-3">
             <div class="card shadow-sm text-center p-3">
                 <h6>Create & Assign Tasks</h6>
-                <button onclick="location.href='create_tasks.php'" class="btn btn-success mt-2">Go</button>
+                <button onclick="location.href='manage_tasks.php'" class="btn btn-success mt-2">Go</button>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card shadow-sm text-center p-3">
                 <h6>Create & Assign Issues</h6>
-                <button onclick="location.href='create_issues.php'" class="btn btn-success mt-2">Go</button>
+                <button onclick="location.href='manage_issues.php'" class="btn btn-success mt-2">Go</button>
             </div>
         </div>
         <div class="col-md-3">
