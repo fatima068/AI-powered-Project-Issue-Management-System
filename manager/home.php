@@ -49,7 +49,7 @@ if ($_SESSION['role_id'] != '2') {
         <div class="col-md-3">
             <div class="card shadow-sm text-center p-3">
                 <h6>Activity Logs & Status History</h6>
-                <button onclick="location.href='activity_logs.php'" class="btn btn-success mt-2">Go</button>
+                <button onclick="location.href='view_activity_logs.php'" class="btn btn-success mt-2">Go</button>
             </div>
         </div>
     </div>
