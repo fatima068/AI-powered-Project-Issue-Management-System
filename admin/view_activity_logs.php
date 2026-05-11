@@ -1,30 +1,30 @@
 <?php
 session_start();
 include '../connect_db.php';
+include '../auth_check.php';
+require_page_access($conn, 'view_activity_logs_admin');
 include '../assets/adminNavBar.php';
-if ($_SESSION['role_id'] != '1') {
-    header('Location: ../index.php');
-    exit;
-}
-$logs = mysqli_query($conn," SELECT  a.activity_id, CONCAT(u.user_id, '-', u.first_name, ' ', u.last_name) AS user_name, COALESCE(t.title, 'N/A') AS task_name, COALESCE(i.title, 'N/A') AS issue_name, a.action, a.timestamp
-FROM activitylog a
-JOIN users u ON a.user_id = u.user_id
-LEFT JOIN tasks t ON a.task_id = t.task_id
-LEFT JOIN issues i ON a.issue_id = i.issue_id
-ORDER BY a.timestamp DESC");
+
+$logs = mysqli_query($conn, " SELECT a.activity_id,
+    CONCAT(u.user_id, '-', u.first_name, ' ', u.last_name) AS user_name,
+    COALESCE(t.title, 'N/A') AS task_name, COALESCE(i.title, 'N/A') AS issue_name, a.action, a.timestamp
+    FROM activitylog a
+    JOIN users u ON a.user_id = u.user_id
+    LEFT JOIN tasks  t ON a.task_id  = t.task_id
+    LEFT JOIN issues i ON a.issue_id = i.issue_id
+    ORDER BY a.timestamp DESC
+");
 
 $status_logs = mysqli_query($conn, " SELECT sh.history_id, COALESCE(t.title, i.title, 'N/A') AS item_name,
-CASE 
-    WHEN sh.task_id IS NOT NULL THEN 'Task'
+    CASE WHEN sh.task_id IS NOT NULL THEN 'Task'
     WHEN sh.issue_id IS NOT NULL THEN 'Issue'
-    ELSE 'Unknown'
-END AS item_type, s.status_name, CONCAT(u.user_id, '-', u.first_name, ' ', u.last_name) AS changed_by_name, sh.changed_at
-FROM StatusHistory sh
-JOIN Status s ON sh.status_id = s.status_id
-JOIN Users u ON sh.changed_by = u.user_id
-LEFT JOIN Tasks t ON sh.task_id = t.task_id
-LEFT JOIN Issues i ON sh.issue_id = i.issue_id
-ORDER BY sh.changed_at DESC
+    ELSE 'Unknown' END AS item_type, s.status_name, CONCAT(u.user_id, '-', u.first_name, ' ', u.last_name) AS changed_by_name, sh.changed_at
+    FROM statushistory sh
+    JOIN status s ON sh.status_id = s.status_id
+    JOIN users  u ON sh.changed_by = u.user_id
+    LEFT JOIN tasks  t ON sh.task_id  = t.task_id
+    LEFT JOIN issues i ON sh.issue_id = i.issue_id
+    ORDER BY sh.changed_at DESC
 ");
 ?>
 
@@ -51,22 +51,19 @@ ORDER BY sh.changed_at DESC
                 <th>Timestamp</th>
             </tr>
         </thead>
-
         <tbody>
-            <?php if($logs && mysqli_num_rows($logs) > 0) {
-                while($row = mysqli_fetch_assoc($logs)){?>
+            <?php if ($logs && mysqli_num_rows($logs) > 0) {
+                while ($row = mysqli_fetch_assoc($logs)) { ?>
                     <tr>
-                        <td><?php echo $row['activity_id']; ?></td>
-                        <td><?php echo $row['user_name']; ?></td>
-                        <td><?php echo $row['task_name']; ?></td>
-                        <td><?php echo $row['issue_name']; ?></td>
-                        <td><?php echo $row['action']; ?></td>
-                        <td><?php echo $row['timestamp']; ?></td>
+                        <td><?php echo (int)$row['activity_id']; ?></td>
+                        <td><?php echo h($row['user_name']); ?></td>
+                        <td><?php echo h($row['task_name']); ?></td>
+                        <td><?php echo h($row['issue_name']); ?></td>
+                        <td><?php echo h($row['action']); ?></td>
+                        <td><?php echo h($row['timestamp']); ?></td>
                     </tr>
-                    <?php
-                }
-            }
-            ?>
+                <?php }
+            } ?>
         </tbody>
         </table>
     </div>
@@ -84,22 +81,19 @@ ORDER BY sh.changed_at DESC
                 <th>Updated By</th>
             </tr>
         </thead>
-
         <tbody>
-            <?php if($status_logs && mysqli_num_rows($status_logs) > 0) {
-                while($row = mysqli_fetch_assoc($status_logs)){?>
+            <?php if ($status_logs && mysqli_num_rows($status_logs) > 0) {
+                while ($row = mysqli_fetch_assoc($status_logs)) { ?>
                     <tr>
-                        <td><?php echo $row['history_id']; ?></td>
-                        <td><?php echo $row['changed_at']; ?></td>
-                        <td><?php echo $row['item_name']; ?></td>
-                        <td><?php echo $row['item_type']; ?></td>
-                        <td><?php echo $row['status_name']; ?></td>
-                        <td><?php echo $row['changed_by_name']; ?></td>
+                        <td><?php echo (int)$row['history_id']; ?></td>
+                        <td><?php echo h($row['changed_at']); ?></td>
+                        <td><?php echo h($row['item_name']); ?></td>
+                        <td><?php echo h($row['item_type']); ?></td>
+                        <td><?php echo h($row['status_name']); ?></td>
+                        <td><?php echo h($row['changed_by_name']); ?></td>
                     </tr>
-                    <?php
-                }
-            }
-            ?>
+                <?php }
+            } ?>
         </tbody>
         </table>
     </div>

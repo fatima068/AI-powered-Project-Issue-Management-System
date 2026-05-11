@@ -4,12 +4,10 @@ include '../connect_db.php';
 include '../assets/stakeholder_navbar.php';
 
 $user_id = $_SESSION['user_id'];
-$query = "
-    SELECT p.project_id, p.project_name, p.start_date, p.end_date, s.status_name
-    FROM Projects p
-    JOIN ProjectMembers pm ON p.project_id = pm.project_id
-    JOIN Status s ON p.status_id = s.status_id
-    WHERE pm.user_id = $user_id";
+$query = " SELECT p.project_id, p.project_name, p.start_date, p.end_date, s.status_name FROM Projects p 
+JOIN ProjectMembers pm ON p.project_id = pm.project_id 
+JOIN Status s ON p.status_id = s.status_id 
+WHERE pm.user_id = $user_id";
 $result = mysqli_query($conn,$query);
 ?>
 

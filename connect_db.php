@@ -2,12 +2,10 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$database = "project_issue_tracking";
+$database = "project_issue_tracking2";
 $conn = mysqli_connect($servername, $username, $password, $database);
 
 if (!$conn) {
   die("Connection failed: " . mysqli_connect_error());
 }
-// //MySQLi Procedural
-// mysqli_close($conn);
 ?>

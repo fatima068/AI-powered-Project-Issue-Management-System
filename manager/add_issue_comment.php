@@ -1,27 +1,32 @@
 <?php
 session_start();
 include '../connect_db.php';
-if ($_SESSION['role_id'] != '2') {
-    header("Location: ../index.php");
+include '../auth_check.php';
+require_login();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: manage_issues.php');
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
-$issue_id = $_POST['issue_id'];
-$comment = trim($_POST['comment_text']);
-if(empty($issue_id) || empty($comment)){
-    header("Location: manage_issues.php?comment_error=1");
+$user_id= $_SESSION['user_id'];
+$issue_id = (int)($_POST['issue_id'] ?? 0);
+$comment = trim($_POST['comment_text'] ?? '');
+
+if ($issue_id <= 0 || empty($comment) || !can_comment_on_issue($conn, $user_id, $issue_id)) {
+    header("Location: manage_issues.php?error=1");
     exit;
 }
 
-$stmt = $conn->prepare("INSERT INTO comments (user_id, issue_id, comment_text) VALUES (?, ?, ?)");
-$stmt->bind_param("iis", $user_id, $issue_id, $comment);
-$stmt->execute();
-
-$action = "Manager added comment on issue ID: " . $issue_id;
-$stmt2 = $conn->prepare("INSERT INTO activitylog (user_id, issue_id, action) VALUES (?, ?, ?)");
-$stmt2->bind_param("iis", $user_id, $issue_id, $action);
-$stmt2->execute();
-header("Location: manage_issues.php?comment_added=1");
-exit;
+try {
+    $stmt = $conn->prepare("CALL sp_add_issue_comment(?, ?, ?)");
+    $stmt->bind_param("iis", $user_id, $issue_id, $comment);
+    $stmt->execute();
+    $stmt->close();
+    header("Location: manage_issues.php?comment=1");
+    exit;
+} catch (mysqli_sql_exception $e) {
+    header("Location: manage_issues.php?error=1");
+    exit;
+}
 ?>

@@ -1,47 +1,46 @@
 <?php
 session_start();
-
-$login = false;
 $showError = "";
 
-if($_SERVER["REQUEST_METHOD"] == "POST"){
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
     include '../connect_db.php';
-    $email = $_POST["email"];
-    $password = $_POST["password"];
-    $password = hash('sha256', $password);
 
-    $sql = "SELECT * FROM users WHERE email = ? AND password_hash = ?";
+    $email = trim($_POST["email"] ?? '');
+    $password = $_POST["password"] ?? '';
+    $sql = "SELECT user_id, role_id, first_name, last_name, email, password_hash, created_at FROM users WHERE email = ?";
     $stmt = mysqli_prepare($conn, $sql);
-
-    mysqli_stmt_bind_param($stmt, "ss", $email, $password);
+    mysqli_stmt_bind_param($stmt, "s", $email);
     mysqli_stmt_execute($stmt);
-
     $result = mysqli_stmt_get_result($stmt);
 
-    if($result && mysqli_num_rows($result) == 1){
+    if ($result && mysqli_num_rows($result) === 1) {
         $row = mysqli_fetch_assoc($result);
-        $_SESSION['user_id'] = $row['user_id'];
-        $_SESSION['role_id'] = $row['role_id'];
-        $_SESSION['first_name'] = $row['first_name'];
-        $_SESSION['last_name'] = $row['last_name'];
-        $_SESSION['email'] = $row['email'];
-        $_SESSION['created_at'] = $row['created_at'];
-
-        if($_SESSION['role_id'] == 1){
-            header("Location: ../admin/home.php");
-            exit();
-        }
-        elseif($_SESSION['role_id'] == 2){
-            header("Location: ../manager/home.php");
-            exit();
-        }
-        elseif($_SESSION['role_id'] == 3){
-            header("Location: ../developer/home.php");
-            exit();
-        }
-        elseif($_SESSION['role_id'] == 4){
-            header("Location: ../stakeholder/home.php");
-            exit();
+        if (password_verify($password, $row['password_hash'])) {
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $row['user_id'];
+            $_SESSION['role_id'] = $row['role_id'];
+            $_SESSION['first_name'] = $row['first_name'];
+            $_SESSION['last_name'] = $row['last_name'];
+            $_SESSION['email'] = $row['email'];
+            $_SESSION['created_at'] = $row['created_at'];
+            if ($row['role_id'] == 1) {
+                header("Location: ../admin/home.php");       
+                exit();
+            } elseif ($row['role_id'] == 2) {
+                header("Location: ../manager/home.php");     
+                exit();
+            } elseif ($row['role_id'] == 3) {
+                header("Location: ../developer/home.php");   
+                exit();
+            } elseif ($row['role_id'] == 4) {
+                header("Location: ../stakeholder/home.php"); 
+                exit();
+            } else {
+                session_destroy();
+                $showError = "No landing page configured for this role.";
+            }
+        } else{
+            $showError = "Invalid credentials!!";
         }
     } 
     else {
@@ -66,17 +65,13 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
         <div class="container mt-5">
             <h2>Login</h2>
-            <?php
-                if($showError){
-                    echo '<div class="alert alert-danger">'.$showError.'</div>';
-                }
+            <?php if ($showError) echo '<div class="alert alert-danger">'.htmlspecialchars($showError).'</div>';
             ?>
             <form action="" method="POST">
                 <div class="mb-3">
                     <label class="form-label">Email</label>
                     <input type="email" name="email" class="form-control" required>
                 </div>
-                
                 <div class="mb-3">
                     <label class="form-label">Password</label>
                     <input type="password" name="password" class="form-control" required>

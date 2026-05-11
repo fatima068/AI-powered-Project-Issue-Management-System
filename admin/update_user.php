@@ -1,34 +1,38 @@
 <?php
 session_start();
 include '../connect_db.php';
-if ($_SESSION['role_id'] != '1') {
-    header("Location: ../index.php");
-    exit;
-}
+include '../auth_check.php';
+require_page_access($conn, 'manage_users');
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $user_id    = $_POST['user_id'];
-    $first_name = trim($_POST['first_name']);
-    $last_name  = trim($_POST['last_name']);
-    $email      = trim($_POST['email']);
-    $role_id    = $_POST['role_id'];
-    if (empty($first_name) || empty($last_name) || empty($email) || empty($role_id)) {
+    $user_id = $_POST['user_id']   ?? '';
+    $first_name = trim($_POST['first_name']?? '');
+    $last_name = trim($_POST['last_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $role_id = $_POST['role_id']?? '';
+
+    if (empty($user_id) || empty($first_name) || empty($last_name) || empty($email) || empty($role_id)) {
         header("Location: manage_users.php?update_error=1");
         exit;
     }
-    $stmt = $conn->prepare("UPDATE users 
-    SET first_name = ?, last_name = ?, email = ?, role_id = ? WHERE user_id = ?");
+    try {
+        $conn->begin_transaction();
 
-    $stmt->bind_param("sssii", $first_name, $last_name, $email, $role_id, $user_id);
-    if ($stmt->execute()) {
+        $stmt = $conn->prepare(" UPDATE users SET first_name = ?, last_name = ?, email = ?, role_id = ? WHERE user_id = ? ");
+        $stmt->bind_param("sssii", $first_name, $last_name, $email, $role_id, $user_id);
+        $stmt->execute();
+
         $admin_id = $_SESSION['user_id'];
-        $action = "Updated user: " . $email;
-        $log_stmt = $conn->prepare("INSERT INTO ActivityLog (user_id, action) VALUES (?, ?)");
+        $action  = "Updated user: " . $email;
+        $log_stmt = $conn->prepare("INSERT INTO activitylog (user_id, action) VALUES (?, ?)");
         $log_stmt->bind_param("is", $admin_id, $action);
         $log_stmt->execute();
+
+        $conn->commit();
         header("Location: manage_users.php?updated=1");
         exit;
-    } 
-    else {
+    } catch (mysqli_sql_exception $e) {
+        $conn->rollback();
         header("Location: manage_users.php?update_error=1");
         exit;
     }

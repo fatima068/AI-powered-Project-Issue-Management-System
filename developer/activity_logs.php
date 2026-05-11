@@ -1,29 +1,39 @@
 <?php
 session_start();
 include '../connect_db.php';
+include '../auth_check.php';
+require_page_access($conn, 'activity_logs_dev');
 include '../assets/developerNavBar.php';
-if ($_SESSION['role_id'] != 3) {
-    header('Location: ../index.php');
-    exit;
-}
 
 $user_id = $_SESSION['user_id'];
-$logs = mysqli_query($conn, "SELECT a.activity_id, CONCAT( u.first_name, ' ', u.last_name) AS user_name, COALESCE(t.title, 'N/A') AS task_name, COALESCE(i.title, 'N/A') AS issue_name, a.action, a.timestamp
-FROM activitylog a
-JOIN users u ON a.user_id = u.user_id
-LEFT JOIN tasks t ON a.task_id = t.task_id
-LEFT JOIN issues i ON a.issue_id = i.issue_id
-WHERE a.user_id = '$user_id' OR t.assigned_to = '$user_id' OR i.assigned_to = '$user_id'
-ORDER BY a.timestamp DESC");
 
-$status_logs = mysqli_query($conn, "SELECT sh.history_id, COALESCE(t.title, i.title, 'N/A') AS item_name, CASE WHEN sh.task_id IS NOT NULL THEN 'Task'WHEN sh.issue_id IS NOT NULL THEN 'Issue'ELSE 'Unknown' END AS item_type, s.status_name, CONCAT( u.first_name, ' ', u.last_name) AS changed_by_name, sh.changed_at
-FROM statushistory sh
-JOIN status s ON sh.status_id = s.status_id
-JOIN users u ON sh.changed_by = u.user_id
-LEFT JOIN tasks t ON sh.task_id = t.task_id
-LEFT JOIN issues i ON sh.issue_id = i.issue_id
-WHERE sh.changed_by = '$user_id' OR t.assigned_to = '$user_id' OR i.assigned_to = '$user_id'
-ORDER BY sh.changed_at DESC");
+$stmt = $conn->prepare(" SELECT a.activity_id, CONCAT(u.first_name, ' ', u.last_name) AS user_name, COALESCE(t.title, 'N/A') AS task_name, COALESCE(i.title, 'N/A') AS issue_name, a.action, a.timestamp
+    FROM activitylog a
+    JOIN users u ON a.user_id = u.user_id
+    LEFT JOIN tasks  t ON a.task_id  = t.task_id
+    LEFT JOIN issues i ON a.issue_id = i.issue_id
+    WHERE a.user_id = ? OR t.assigned_to = ? OR i.assigned_to = ?
+    ORDER BY a.timestamp DESC");
+
+$stmt->bind_param("iii", $user_id, $user_id, $user_id);
+$stmt->execute();
+$logs = $stmt->get_result();
+
+$stmt2 = $conn->prepare(" SELECT sh.history_id, COALESCE(t.title, i.title, 'N/A') AS item_name,
+           CASE WHEN sh.task_id IS NOT NULL THEN 'Task'
+            WHEN sh.issue_id IS NOT NULL THEN 'Issue'
+            ELSE 'Unknown' END AS item_type,
+           s.status_name, CONCAT(u.first_name,' ', u.last_name) AS changed_by_name, sh.changed_at
+    FROM statushistory sh
+    JOIN status s ON sh.status_id = s.status_id
+    JOIN users u ON sh.changed_by = u.user_id
+    LEFT JOIN tasks t ON sh.task_id  = t.task_id
+    LEFT JOIN issues i ON sh.issue_id = i.issue_id
+    WHERE sh.changed_by = ? OR t.assigned_to = ? OR i.assigned_to = ?
+    ORDER BY sh.changed_at DESC");
+$stmt2->bind_param("iii", $user_id, $user_id, $user_id);
+$stmt2->execute();
+$status_logs = $stmt2->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -44,29 +54,25 @@ ORDER BY sh.changed_at DESC");
                 <th>Task</th>
                 <th>Issue</th>
                 <th>Action</th>
-                <th>Time</th> 
+                <th>Time</th>
             </tr>
         </thead>
         <?php $srnum = 1; ?>
         <tbody>
-        <?php
-        if($logs && mysqli_num_rows($logs) > 0){
-            while($row = mysqli_fetch_assoc($logs)){
-        ?>
+        <?php if ($logs && $logs->num_rows > 0) {
+            while ($row = $logs->fetch_assoc()) { ?>
             <tr>
                 <td><?= $srnum++; ?></td>
-                <td><?= $row['user_name']; ?></td>
-                <td><?= $row['task_name']; ?></td>
-                <td><?= $row['issue_name']; ?></td>
-                <td><?= $row['action']; ?></td>
-                <td><?= $row['timestamp']; ?></td>
+                <td><?= h($row['user_name']); ?></td>
+                <td><?= h($row['task_name']); ?></td>
+                <td><?= h($row['issue_name']); ?></td>
+                <td><?= h($row['action']); ?></td>
+                <td><?= h($row['timestamp']); ?></td>
             </tr>
-        <?php
-            }
+        <?php }
         } else {
             echo "<tr><td colspan='6'>No activity found</td></tr>";
-        }
-        ?>
+        } ?>
         </tbody>
     </table>
 </div>
@@ -86,32 +92,20 @@ ORDER BY sh.changed_at DESC");
         </thead>
         <?php $srnum = 1; ?>
         <tbody>
-        <?php
-        if($status_logs && mysqli_num_rows($status_logs) > 0){
-            while($row = mysqli_fetch_assoc($status_logs)){
-        ?>
+        <?php if ($status_logs && $status_logs->num_rows > 0) {
+            while ($row = $status_logs->fetch_assoc()) { ?>
             <tr>
                 <td><?= $srnum++; ?></td>
-                <td><?= $row['changed_at']; ?></td>
-                <td><?= $row['item_name']; ?></td>
-                <td>
-                    <span class="badge bg-secondary">
-                        <?= $row['item_type']; ?>
-                    </span>
-                </td>
-                <td>
-                    <span class="badge bg-info text-dark">
-                        <?= $row['status_name']; ?>
-                    </span>
-                </td>
-                <td><?= $row['changed_by_name']; ?></td>
+                <td><?= h($row['changed_at']); ?></td>
+                <td><?= h($row['item_name']); ?></td>
+                <td><span class="badge bg-secondary"><?= h($row['item_type']); ?></span></td>
+                <td><span class="badge bg-info text-dark"><?= h($row['status_name']); ?></span></td>
+                <td><?= h($row['changed_by_name']); ?></td>
             </tr>
-        <?php
-            }
+        <?php }
         } else {
             echo "<tr><td colspan='6'>No status history found</td></tr>";
-        }
-        ?>
+        } ?>
         </tbody>
     </table>
 </div>

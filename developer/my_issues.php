@@ -1,20 +1,15 @@
 <?php
 session_start();
 include '../connect_db.php';
+include '../auth_check.php';
+require_page_access($conn, 'my_issues');
 include '../assets/developerNavBar.php';
-if ($_SESSION['role_id'] != 3) {
-    header('Location: ../index.php');
-    exit;
-}
 
 $user_id = $_SESSION['user_id'];
-$issues = mysqli_query($conn, "SELECT i.*, s.status_name, p.priority_name, pr.project_name
-FROM issues i
-LEFT JOIN status s ON i.status_id = s.status_id
-LEFT JOIN priority p ON i.priority_id = p.priority_id
-LEFT JOIN projects pr ON i.project_id = pr.project_id
-WHERE i.assigned_to = '$user_id'
-ORDER BY i.issue_id DESC");
+$stmt = $conn->prepare(" SELECT * FROM v_issue_details WHERE assigned_to = ? ORDER BY issue_id DESC ");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$issues = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -42,68 +37,61 @@ ORDER BY i.issue_id DESC");
         </thead>
         <?php $srnum = 1; ?>
         <tbody>
-        <?php
-        if ($issues && mysqli_num_rows($issues) > 0) {
-            while ($row = mysqli_fetch_assoc($issues)) {
-        ?>
+        <?php if ($issues && $issues->num_rows > 0) {
+            while ($row = $issues->fetch_assoc()) { ?>
             <tr>
                 <td><?= $srnum++; ?></td>
-                <td><?= $row['title']; ?></td>
-                <td><?= $row['project_name']; ?></td>
-                <td><?= $row['status_name']; ?></td>
-                <td><?= $row['priority_name']; ?></td>
-                <td><?= $row['created_at']; ?></td>
+                <td><?= h($row['title']); ?></td>
+                <td><?= h($row['project_name']);?></td>
+                <td><?= h($row['status_name']);?></td>
+                <td><?= h($row['priority_name']);?></td>
+                <td><?= h($row['created_at']); ?></td>
                 <td>
-                    <button class="btn btn-sm btn-primary"
-                        data-bs-toggle="modal"
-                        data-bs-target="#viewIssue<?= $row['issue_id']; ?>">
-                        View
-                    </button>
-                    <button class="btn btn-sm btn-warning"
-                        data-bs-toggle="modal"
-                        data-bs-target="#statusIssue<?= $row['issue_id']; ?>">
-                        Change Status
-                    </button>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#viewIssue<?= (int)$row['issue_id']; ?>">View</button>
+                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#statusIssue<?= (int)$row['issue_id']; ?>">Change Status</button>
                 </td>
             </tr>
 
             <!-- VIEW ISSUE MODAL -->
-            <div class="modal fade" id="viewIssue<?= $row['issue_id']; ?>">
+            <div class="modal fade" id="viewIssue<?= (int)$row['issue_id']; ?>">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title"><?= $row['title']; ?></h5>
+                            <h5 class="modal-title"><?= h($row['title']); ?></h5>
                             <button class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <p><strong>Issue ID:</strong> <?= $row['issue_id']; ?></p>
-                            <p><strong>Description:</strong><br><?= $row['description']; ?></p>
-                            <p><strong>Project:</strong> <?= $row['project_name']; ?></p>
-                            <p><strong>Status:</strong> <?= $row['status_name']; ?></p>
-                            <p><strong>Priority:</strong> <?= $row['priority_name']; ?></p>
-                            <p><strong>Created At:</strong> <?= $row['created_at']; ?></p>
+                            <p><strong>Issue ID:</strong> <?= (int)$row['issue_id']; ?></p>
+                            <p><strong>Description:</strong><br><?= nl2br(h($row['description'])); ?></p>
+                            <p><strong>Project:</strong> <?= h($row['project_name']); ?></p>
+                            <p><strong>Status:</strong> <?= h($row['status_name']); ?></p>
+                            <p><strong>Priority:</strong> <?= h($row['priority_name']); ?></p>
+                            <p><strong>Created At:</strong> <?= h($row['created_at']); ?></p>
                             <hr>
                             <h6>Comments</h6>
                             <?php
-                            $issue_id = $row['issue_id'];
-                            $comments = mysqli_query($conn, "SELECT c.*, u.first_name, u.last_name FROM comments c
-                            JOIN users u ON c.user_id = u.user_id
-                            WHERE c.issue_id = '$issue_id'
-                            ORDER BY c.created_at DESC
-                            ");
-                            if(mysqli_num_rows($comments) > 0){
-                                while($c = mysqli_fetch_assoc($comments)){
-                                    echo "<div class='border p-2 mb-2'>
-                                            <strong>{$c['first_name']} {$c['last_name']}</strong><br>
-                                            {$c['comment_text']}<br>
-                                            <small>{$c['created_at']}</small>
+                            $issue_id = (int)$row['issue_id'];
+                            $cstmt = $conn->prepare(" SELECT c.comment_text, c.created_at, u.first_name, u.last_name FROM comments c 
+                            JOIN users u ON c.user_id = u.user_id 
+                            WHERE c.issue_id = ? 
+                            ORDER BY c.created_at DESC ");
+
+                            $cstmt->bind_param("i", $issue_id);
+                            $cstmt->execute();
+                            $comments = $cstmt->get_result();
+
+                            if ($comments->num_rows > 0) {
+                                while ($c = $comments->fetch_assoc()) {
+                                    echo "<div class='border p-2 mb-2'> <strong>".h($c['first_name']." ".$c['last_name'])."</strong><br> ".nl2br(h($c['comment_text']))."<br> <small>".h($c['created_at'])."</small>
                                           </div>";
                                 }
-                            } else { echo "<p>No comments yet.</p>"; }
+                            } else {
+                                echo "<p>No comments yet</p>";
+                            }
+                            $cstmt->close();
                             ?>
-
                             <form action="add_issue_comment.php" method="POST">
-                                <input type="hidden" name="issue_id" value="<?= $row['issue_id']; ?>">
+                                <input type="hidden" name="issue_id" value="<?= (int)$row['issue_id']; ?>">
                                 <div class="mt-2">
                                     <textarea name="comment_text" class="form-control" placeholder="Add comment..." required></textarea>
                                 </div>
@@ -115,7 +103,7 @@ ORDER BY i.issue_id DESC");
             </div>
 
             <!-- CHANGE STATUS MODAL -->
-            <div class="modal fade" id="statusIssue<?= $row['issue_id']; ?>">
+            <div class="modal fade" id="statusIssue<?= (int)$row['issue_id']; ?>">
                 <div class="modal-dialog">
                     <div class="modal-content">
                     <form action="update_issue_status.php" method="POST">
@@ -124,18 +112,17 @@ ORDER BY i.issue_id DESC");
                             <button class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <input type="hidden" name="issue_id" value="<?= $row['issue_id']; ?>">
+                            <input type="hidden" name="issue_id" value="<?= (int)$row['issue_id']; ?>">
                             <label>Status</label>
                             <select name="status_id" class="form-select">
                                 <?php
-                                $statuses = mysqli_query($conn,"SELECT * FROM status");
-                                while($s = mysqli_fetch_assoc($statuses)){
-                                    echo "<option value='{$s['status_id']}'>{$s['status_name']}</option>";
+                                $statuses = mysqli_query($conn, "SELECT * FROM status");
+                                while ($s = mysqli_fetch_assoc($statuses)) {
+                                    echo "<option value='".(int)$s['status_id']."'>".h($s['status_name'])."</option>";
                                 }
                                 ?>
                             </select>
                         </div>
-
                         <div class="modal-footer">
                             <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button class="btn btn-primary">Update</button>
@@ -146,6 +133,8 @@ ORDER BY i.issue_id DESC");
             </div>
         <?php
             }
+        } else {
+            echo "<tr><td colspan='7'>No issues found.</td></tr>";
         }
         ?>
         </tbody>

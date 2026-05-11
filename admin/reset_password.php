@@ -1,38 +1,44 @@
 <?php
 session_start();
 include '../connect_db.php';
-if ($_SESSION['role_id'] != '1') {
-    header("Location: ../index.php");
-    exit;
-}
+include '../auth_check.php';
+require_page_access($conn, 'manage_users');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $user_id  = $_POST['user_id'];
-    $password = $_POST['password'];
+    $user_id = $_POST['user_id']  ?? '';
+    $password = $_POST['password'] ?? '';
+
     if (empty($user_id) || empty($password)) {
         header("Location: manage_users.php?reset_error=1");
         exit;
     }
-    $stmt = $conn->prepare("SELECT email FROM users WHERE user_id = ?");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $email = $user['email'];
 
-    $password = hash('sha256', $password);
-    $stmt = $conn->prepare(" UPDATE users SET password_hash = ? WHERE user_id = ?");
-    $stmt->bind_param("si", $password, $user_id);
+    try {
+        $conn->begin_transaction();
+        $stmt = $conn->prepare("SELECT email FROM users WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $user  = $stmt->get_result()->fetch_assoc();
+        $email = $user['email'] ?? '(unknown)';
+        $stmt->close();
 
-    if ($stmt->execute()) {
+        // Proper bcrypt hash
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("UPDATE users SET password_hash = ? WHERE user_id = ?");
+        $stmt->bind_param("si", $hash, $user_id);
+        $stmt->execute();
+
         $admin_id = $_SESSION['user_id'];
-        $action = "Reset password for user: " . $email;
-        $log_stmt = $conn->prepare("INSERT INTO ActivityLog (user_id, action) VALUES (?, ?)");
+        $action   = "Reset password for user: " . $email;
+        $log_stmt = $conn->prepare("INSERT INTO activitylog (user_id, action) VALUES (?, ?)");
         $log_stmt->bind_param("is", $admin_id, $action);
         $log_stmt->execute();
+
+        $conn->commit();
         header("Location: manage_users.php?reset=1");
         exit;
-    } else {
+    } catch (mysqli_sql_exception $e) {
+        $conn->rollback();
         header("Location: manage_users.php?reset_error=1");
         exit;
     }

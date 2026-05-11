@@ -1,21 +1,12 @@
 <?php
 session_start();
 include '../connect_db.php';
+include '../auth_check.php';
+require_page_access($conn, 'manage_comments');
 include '../assets/adminNavBar.php';
-if ($_SESSION['role_id'] != '1') {
-    header('Location: ../index.php');
-    exit;
-}
-$all_comments = mysqli_query($conn, " SELECT  c.comment_id,  c.comment_text,  c.created_at,  CONCAT(u.user_id, '-', u.first_name, ' ', u.last_name) AS author_name, COALESCE(t.title, i.title, 'N/A') AS target_title,
-CASE 
-    WHEN c.task_id IS NOT NULL THEN 'Task'
-    WHEN c.issue_id IS NOT NULL THEN 'Issue'
-    ELSE 'Unknown'
-END AS target_type
-FROM comments c
-JOIN users u ON c.user_id = u.user_id
-LEFT JOIN tasks t ON c.task_id = t.task_id
-LEFT JOIN issues i ON c.issue_id = i.issue_id
+
+$all_comments = mysqli_query($conn, " SELECT c.*, CONCAT((SELECT user_id FROM users WHERE user_id = c.author_id), '-', c.author_name) AS author_display 
+FROM v_comments_full c 
 ORDER BY c.created_at DESC ");
 ?>
 
@@ -32,10 +23,11 @@ ORDER BY c.created_at DESC ");
     <div class="container mt-4">
         <h2 class="mb-3">All User Comments</h2>
 
-         <?php if(isset($_GET['deleted'])){ ?>
+        <?php if(isset($_GET['deleted'])){ ?>
             <div class="alert alert-success auto-dismiss" role="alert">Comment deleted successfully!</div>
+        <?php } elseif(isset($_GET['delete_error'])){ ?>
+            <div class="alert alert-danger auto-dismiss" role="alert">Error deleting comment.</div>
         <?php } ?>
-        
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -49,18 +41,18 @@ ORDER BY c.created_at DESC ");
                 </tr>
             </thead>
             <tbody>
-                <?php if($all_comments && mysqli_num_rows($all_comments) > 0) { 
-                    while($row = mysqli_fetch_assoc($all_comments)) { ?>
+                <?php if ($all_comments && mysqli_num_rows($all_comments) > 0) {
+                    while ($row = mysqli_fetch_assoc($all_comments)) { ?>
                     <tr>
-                        <td><?php echo $row['comment_id']; ?></td>
-                        <td><?php echo htmlspecialchars($row['author_name']); ?></td>
-                        <td><?php echo htmlspecialchars($row['comment_text']); ?></td>
-                        <td><?php echo htmlspecialchars($row['target_title']); ?></td>
-                        <td><?php echo htmlspecialchars($row['target_type']); ?></td>
-                        <td><?php echo $row['created_at']; ?></td>
+                        <td><?php echo (int)$row['comment_id']; ?></td>
+                        <td><?php echo h($row['author_display']); ?></td>
+                        <td><?php echo h($row['comment_text']); ?></td>
+                        <td><?php echo h($row['target_title'] ?? 'N/A'); ?></td>
+                        <td><?php echo h($row['target_type']); ?></td>
+                        <td><?php echo h($row['created_at']); ?></td>
                         <td>
                             <form action="delete_comment.php" method="POST">
-                                <input type="hidden" name="comment_id" value="<?php echo $row['comment_id']; ?>">
+                                <input type="hidden" name="comment_id" value="<?php echo (int)$row['comment_id']; ?>">
                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                             </form>
                         </td>

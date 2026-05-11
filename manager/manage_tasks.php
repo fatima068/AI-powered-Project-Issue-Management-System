@@ -1,235 +1,161 @@
 <?php
 session_start();
 include '../connect_db.php';
+include '../auth_check.php';
+require_page_access($conn, 'manage_tasks');
 include '../assets/managerNavBar.php';
-if ($_SESSION['role_id'] != '2') {
-    header("Location: ../index.php");
-    exit;
-}
 
-$manager_id = $_SESSION['user_id'];
-$tasks = mysqli_query($conn, "
-SELECT t.*, s.status_name, p.priority_name, pr.project_name, u.first_name AS assigned_fname, u.last_name AS assigned_lname
-FROM tasks t
-JOIN projects pr ON t.project_id = pr.project_id
-JOIN projectmembers pm ON pr.project_id = pm.project_id
-LEFT JOIN status s ON t.status_id = s.status_id
-LEFT JOIN priority p ON t.priority_id = p.priority_id
-LEFT JOIN users u ON t.assigned_to = u.user_id
-WHERE pm.user_id = $manager_id
-ORDER BY t.task_id DESC");
+$user_id = $_SESSION['user_id'];
 
-$projects = mysqli_query($conn, "
-SELECT DISTINCT pr.project_id, pr.project_name
-FROM projects pr
-JOIN projectmembers pm ON pr.project_id = pm.project_id
-WHERE pm.user_id = $manager_id");
+$stmt = $conn->prepare(" SELECT vtd.* FROM v_task_details vtd
+JOIN projectmembers pm ON pm.project_id = vtd.project_id
+WHERE pm.user_id = ? AND pm.role_id = 2
+ORDER BY vtd.task_id DESC ");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$tasks = $stmt->get_result();
 
-$allMembers = [];
-$membersQuery = mysqli_query($conn, "
-SELECT pm.project_id, u.user_id, u.first_name, u.last_name
-FROM projectmembers pm
-JOIN users u ON pm.user_id = u.user_id");
-while($m = mysqli_fetch_assoc($membersQuery)){
-    $allMembers[] = $m;
-}
-$statusList = mysqli_query($conn, "SELECT * FROM status");
-$priorityList = mysqli_query($conn, "SELECT * FROM priority");
+$pstmt = $conn->prepare(" SELECT p.project_id, p.project_name FROM projects p
+JOIN projectmembers pm ON pm.project_id = p.project_id
+WHERE pm.user_id = ? AND pm.role_id = 2
+ORDER BY p.project_name ");
+$pstmt->bind_param("i", $user_id);
+$pstmt->execute();
+$my_projects = $pstmt->get_result();
+$project_options = [];
+while ($p = $my_projects->fetch_assoc()) $project_options[] = $p;
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Manage Tasks</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
-<body>
+<body class="bg-light">
 <div class="container mt-4">
-<h2>Manage Tasks</h2>
+    <h2>Manage Tasks</h2>
 
-<?php if(isset($_GET['created'])){ ?>
-<div class="alert alert-success auto-dismiss">Task created!</div>
-<?php } elseif(isset($_GET['deleted'])){ ?>
-<div class="alert alert-success auto-dismiss">Task deleted!</div>
-<?php } elseif(isset($_GET['comment_added'])){ ?>
-<div class="alert alert-success auto-dismiss">Comment added!</div>
-<?php } ?>
-<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addTaskModal">Add Task</button>
-<table class="table table-striped">
-<thead>
-    <tr>
-        <th>ID</th>
-        <th>Title</th>
-        <th>Project</th>
-        <th>Status</th>
-        <th>Priority</th>
-        <th>Due</th>
-        <th>Actions</th>
-    </tr>
-</thead>
-<tbody>
-    <?php while($t = mysqli_fetch_assoc($tasks)){ ?>
-    <tr>
-        <td><?= $t['task_id'] ?></td>
-        <td><?= htmlspecialchars($t['title']) ?></td>
-        <td><?= $t['project_name'] ?></td>
-        <td><?= $t['status_name'] ?></td>
-        <td><?= $t['priority_name'] ?></td>
-        <td><?= $t['due_date'] ?></td>
-        <td>
-            <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewTask<?= $t['task_id'] ?>">View</button>
-            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteTask<?= $t['task_id'] ?>">Delete</button>
-        </td>
-    </tr>
-
-    <div class="modal fade" id="viewTask<?= $t['task_id'] ?>">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-
-                <div class="modal-header">
-                <h5><?= $t['title'] ?></h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-            <div class="modal-body">
-
-                <p><b>Description:</b><br><?= $t['description'] ?></p>
-                <p><b>Project:</b> <?= $t['project_name'] ?></p>
-                <p><b>Assigned To:</b> 
-                <?= $t['assigned_fname'] . " " . $t['assigned_lname'] ?>
-                </p>
-                <p><b>Status:</b> <?= $t['status_name'] ?></p>
-                <p><b>Priority:</b> <?= $t['priority_name'] ?></p>
-                <p><b>Due:</b> <?= $t['due_date'] ?></p>
-
-                <hr>
-                <h6>Comments</h6>
-
-                <?php
-                $task_id = $t['task_id'];
-
-                $comments = mysqli_query($conn, "
-                SELECT c.*, u.first_name, u.last_name
-                FROM comments c
-                JOIN users u ON c.user_id = u.user_id
-                WHERE c.task_id = '$task_id'
-                ORDER BY c.created_at DESC
-                ");
-
-                if(mysqli_num_rows($comments) > 0){
-                    while($c = mysqli_fetch_assoc($comments)){
-                        echo "<div class='border p-2 mb-2'>
-                        <b>{$c['first_name']} {$c['last_name']}</b><br>
-                        {$c['comment_text']}<br>
-                        <small>{$c['created_at']}</small>
-                        </div>";
-                    }
-                } else {
-                    echo "<p>No comments yet.</p>";
-                }
-                ?>
-
-                <hr>
-                <h6>Add Comment</h6>
-                <form action="add_comment.php" method="POST">
-                    <input type="hidden" name="task_id" value="<?= $t['task_id'] ?>">
-                    <textarea name="comment_text" class="form-control mb-2" required></textarea>
-                    <button class="btn btn-dark btn-sm">Add Comment</button>
-                </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="deleteTask<?= $t['task_id'] ?>">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5>Confirm Delete</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body"> Are you sure you want to delete this task? </div>
-
-            <div class="modal-footer">
-                <form action="delete_task.php" method="POST">
-                    <input type="hidden" name="task_id" value="<?= $t['task_id'] ?>">
-                    <button class="btn btn-danger">Delete</button>
-                </form>
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            </div>
-
-            </div>
-        </div>
-    </div>
+    <?php if(isset($_GET['created'])){ ?>
+        <div class="alert alert-success auto-dismiss">Task created.</div>
+    <?php } elseif(isset($_GET['deleted'])){ ?>
+        <div class="alert alert-success auto-dismiss">Task deleted.</div>
+    <?php } elseif(isset($_GET['error'])){ ?>
+        <div class="alert alert-danger auto-dismiss">Operation failed.</div>
     <?php } ?>
-</tbody>
-</table>
+    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#createTaskModal">Create Task</button>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th><th>Title</th><th>Project</th><th>Assigned To</th>
+                <th>Status</th><th>Priority</th><th>Due Date</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php if ($tasks && $tasks->num_rows > 0) {
+            while ($row = $tasks->fetch_assoc()) { ?>
+            <tr>
+                <td><?= (int)$row['task_id']; ?></td>
+                <td><?= h($row['title']); ?></td>
+                <td><?= h($row['project_name']); ?></td>
+                <td><?= h($row['assigned_to_name']); ?></td>
+                <td><?= h($row['status_name']); ?></td>
+                <td><?= h($row['priority_name']); ?></td>
+                <td><?= h($row['due_date']); ?></td>
+                <td>
+                    <form action="delete_task.php" method="POST" class="d-inline" onsubmit="return confirm('Delete this task?');">
+                        <input type="hidden" name="task_id" value="<?= (int)$row['task_id']; ?>">
+                        <button class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        <?php }
+        } else {
+            echo "<tr><td colspan='8'>No tasks found.</td></tr>";
+        } ?>
+        </tbody>
+    </table>
 </div>
 
-<div class="modal fade" id="addTaskModal">
+<!-- CREATE TASK MODAL -->
+<div class="modal fade" id="createTaskModal">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="create_task.php" method="POST">
-                <div class="modal-header">
-                    <h5>Add Task</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
+        <form action="create_task.php" method="POST">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label">Title</label>
+                    <input type="text" class="form-control" name="title" required>
                 </div>
-
-                <div class="modal-body">
-                    <input type="text" name="title" class="form-control mb-2" placeholder="Title" required>
-                    <textarea name="description" class="form-control mb-2" placeholder="Description" required></textarea>
-                    <select name="project_id" id="projectSelect" class="form-control mb-2" required>
-                        <option value="">Select Project</option>
-                        <?php while($p = mysqli_fetch_assoc($projects)){ ?>
-                        <option value="<?= $p['project_id'] ?>"><?= $p['project_name'] ?></option>
-                        <?php } ?>
-                    </select>
-                    <select name="assigned_to" id="memberSelect" class="form-control mb-2" required>
-                        <option value="">Select Member</option>
-                    </select>
-                    <select name="status_id" class="form-control mb-2" required>
-                        <?php while($s = mysqli_fetch_assoc($statusList)){ ?>
-                        <option value="<?= $s['status_id'] ?>"><?= $s['status_name'] ?></option>
-                        <?php } ?>
-                    </select>
-                    <select name="priority_id" class="form-control mb-2" required>
-                        <?php while($p = mysqli_fetch_assoc($priorityList)){ ?>
-                        <option value="<?= $p['priority_id'] ?>"><?= $p['priority_name'] ?></option>
-                        <?php } ?>
-                    </select>
-
-                    <input type="date" name="due_date" class="form-control" required>
+                <div class="mb-2">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" name="description"></textarea>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary">Create</button>
+                <div class="mb-2">
+                    <label class="form-label">Project</label>
+                    <select name="project_id" class="form-select" id="projSel" required>
+                        <option value="">-- select --</option>
+                        <?php foreach ($project_options as $p) {
+                            echo "<option value='".(int)$p['project_id']."'>".h($p['project_name'])."</option>";
+                        } ?>
+                    </select>
                 </div>
-            </form>
+                <div class="mb-2">
+                    <label class="form-label">Assign To</label>
+                    <select name="assigned_to" class="form-select" required>
+                        <option value="">-- choose project first --</option>
+                        <?php
+                        // Show developers across all the manager's projects
+                        $dstmt = $conn->prepare(" SELECT DISTINCT u.user_id, u.first_name, u.last_name, p.project_id, p.project_name FROM users u
+                            JOIN projectmembers pm ON pm.user_id = u.user_id
+                            JOIN projects p ON p.project_id = pm.project_id
+                            JOIN projectmembers mgr ON mgr.project_id = p.project_id
+                            WHERE u.role_id = 3 AND mgr.user_id = ? AND mgr.role_id = 2
+                            ORDER BY p.project_name, u.first_name
+                        ");
+                        $dstmt->bind_param("i", $user_id);
+                        $dstmt->execute();
+                        $devs = $dstmt->get_result();
+                        while ($d = $devs->fetch_assoc()) {
+                            echo "<option value='".(int)$d['user_id']."' data-project='".(int)$d['project_id']."'>".h($d['first_name']." ".$d['last_name'])." (".h($d['project_name']).")</option>";
+                        }
+                        $dstmt->close();
+                        ?>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Priority</label>
+                    <select name="priority_id" class="form-select" required>
+                        <?php
+                        $pri = mysqli_query($conn, "SELECT * FROM priority");
+                        while ($p = mysqli_fetch_assoc($pri)) {
+                            echo "<option value='".(int)$p['priority_id']."'>".h($p['priority_name'])."</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Due Date</label>
+                    <input type="date" class="form-control" name="due_date" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+        </form>
         </div>
     </div>
 </div>
 
 <script>
-const allMembers = <?php echo json_encode($allMembers); ?>;
-const projectSelect = document.getElementById("projectSelect");
-const memberSelect = document.getElementById("memberSelect");
-projectSelect.addEventListener("change", function() {
-    const projectId = this.value;
-    memberSelect.innerHTML = '<option value="">Select Member</option>';
-    const filtered = allMembers.filter(m => m.project_id == projectId);
-    filtered.forEach(m => {
-        const option = document.createElement("option");
-        option.value = m.user_id;
-        option.textContent = m.first_name + " " + m.last_name;
-        memberSelect.appendChild(option);
-    });
-});
-</script>
-
-<script>
-setTimeout(()=>{
-document.querySelectorAll('.auto-dismiss').forEach(e=>e.remove());
-},2000);
+    setTimeout(() => document.querySelectorAll('.auto-dismiss').forEach(a => a.remove()), 2000);
 </script>
 </body>
 </html>

@@ -4,11 +4,9 @@ include '../connect_db.php';
 include '../assets/stakeholder_navbar.php';
 
 $user_id = $_SESSION['user_id'];
-$project_query = "
-    SELECT p.project_id, p.project_name
-    FROM Projects p
-    JOIN ProjectMembers pm ON p.project_id = pm.project_id
-    WHERE pm.user_id=$user_id";
+$project_query = " SELECT p.project_id, p.project_name FROM Projects p 
+JOIN ProjectMembers pm ON p.project_id = pm.project_id 
+WHERE pm.user_id=$user_id";
 $project_result = mysqli_query($conn, $project_query);
 
 $progress = [];
@@ -23,12 +21,10 @@ if (isset($_GET['project_id']) && !empty($_GET['project_id'])) {
     $total_task_result = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS total_tasks FROM Tasks WHERE project_id=$project_id"));
     $total_tasks = $total_task_result['total_tasks'] ?? 1;
 
-    $task_query = "
-        SELECT s.status_name, COUNT(*) AS count
-        FROM Tasks t
-        JOIN Status s ON t.status_id = s.status_id
-        WHERE t.project_id=$project_id
-        GROUP BY s.status_name";
+    $task_query = " SELECT s.status_name, COUNT(*) AS count FROM Tasks t 
+    JOIN Status s ON t.status_id = s.status_id 
+    WHERE t.project_id=$project_id 
+    GROUP BY s.status_name";
     $task_result = mysqli_query($conn, $task_query);
 
     while($row = mysqli_fetch_assoc($task_result)) {
@@ -114,7 +110,6 @@ if (isset($_GET['project_id']) && !empty($_GET['project_id'])) {
                             <?php echo $percent; ?>%
                         </div>
                     </div>
-
                 </div>
 
                 <div class="modal-footer">

@@ -1,21 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="">Dashboard</a>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item"><a class="nav-link active" href="../developer/home.php">Home</a></li>
-                </ul>
-            </div>
+<?php
+if (!isset($_SESSION['user_id'])) { return; }
+?>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="home.php">Developer</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#devNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="devNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="home.php">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="my_tasks.php">My Tasks</a></li>
+                <li class="nav-item"><a class="nav-link" href="my_issues.php">My Issues</a></li>
+                <li class="nav-item"><a class="nav-link" href="my_projects.php">My Projects</a></li>
+                <li class="nav-item"><a class="nav-link" href="activity_logs.php">Activity</a></li>
+            </ul>
+            <span class="navbar-text text-light me-3"><?php echo htmlspecialchars($_SESSION['first_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></span>
+            <a class="btn btn-outline-light btn-sm" href="../login/logout.php">Logout</a>
         </div>
-    </nav>
-</body>
-</html>
+    </div>
+</nav>

@@ -25,10 +25,7 @@ if ($_SESSION['role_id'] != 4) {
             <div class="card shadow text-center p-4">
                 <h5>Project Overview</h5>
                 <p class="text-muted">View projects and progress</p>
-                <button onclick="location.href='project_overview.php'" 
-                class="btn btn-info mt-2">
-                Open
-                </button>
+                <button onclick="location.href='project_overview.php'" class="btn btn-info mt-2">Open</button>
             </div>
         </div>
 
@@ -36,10 +33,7 @@ if ($_SESSION['role_id'] != 4) {
             <div class="card shadow text-center p-4">
                 <h5>Project Reports</h5>
                 <p class="text-muted">Generate project reports</p>
-                <button onclick="location.href='project_reports.php'" 
-                class="btn btn-info mt-2">
-                Open
-                </button>
+                <button onclick="location.href='project_reports.php'" class="btn btn-info mt-2">Open</button>
             </div>
         </div>
 
@@ -47,10 +41,7 @@ if ($_SESSION['role_id'] != 4) {
             <div class="card shadow text-center p-4">
                 <h5>Project Progress</h5>
                 <p class="text-muted">View task and issue statistics</p>
-                <button onclick="location.href='project_progress.php'" 
-                class="btn btn-info mt-2">
-                Open
-                </button>
+                <button onclick="location.href='project_progress.php'" class="btn btn-info mt-2">Open</button>
             </div>
         </div>
     </div>
