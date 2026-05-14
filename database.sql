@@ -231,7 +231,6 @@ BEGIN
 
     START TRANSACTION;
         UPDATE tasks SET status_id = p_status_id WHERE task_id = p_task_id;
-        -- statushistory insert removed: trg_task_status_change handles it automatically on UPDATE
         INSERT INTO activitylog (user_id, task_id, action) VALUES (p_user_id, p_task_id, 'Updated task status');
     COMMIT;
 END$$
@@ -251,7 +250,6 @@ BEGIN
 
     START TRANSACTION;
         UPDATE issues SET status_id = p_status_id WHERE issue_id = p_issue_id;
-        -- statushistory insert removed: trg_issue_status_change handles it automatically on UPDATE
         INSERT INTO activitylog (user_id, issue_id, action) VALUES (p_user_id, p_issue_id, 'Updated issue status');
     COMMIT;
 END$$
@@ -296,9 +294,6 @@ END$$
 
 DELIMITER ;
 
--- -------------------------------------------------------
--- Triggers
--- -------------------------------------------------------
 DELIMITER $$
 
 -- Trigger 1: Log status history when a task's status changes
@@ -333,18 +328,6 @@ BEGIN
 END$$
 
 DELIMITER ;
-
-CREATE INDEX idx_tasks_assigned_to ON tasks(assigned_to);
-CREATE INDEX idx_tasks_project ON tasks(project_id);
-CREATE INDEX idx_tasks_status ON tasks(status_id);
-CREATE INDEX idx_issues_assigned_to ON issues(assigned_to);
-CREATE INDEX idx_issues_project ON issues(project_id);
-CREATE INDEX idx_issues_status ON issues(status_id);
-CREATE INDEX idx_activity_user ON activitylog(user_id);
-CREATE INDEX idx_activity_ts ON activitylog(timestamp);
-CREATE INDEX idx_sh_task ON statushistory(task_id);
-CREATE INDEX idx_sh_issue ON statushistory(issue_id);
-CREATE INDEX idx_pm_user ON projectmembers(user_id);
 
 INSERT INTO roles (role_id, role_name, description) VALUES
 (1, 'Admin', 'System administrator with full privileges'),
