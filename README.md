@@ -31,7 +31,7 @@ The AI extension adds a Python Flask service that runs alongside the PHP applica
 
 **Manager Dashboard**
 
-<img width="948" height="441" alt="image" src="https://github.com/user-attachments/assets/deb07ca4-8143-4054-a999-b8db914b486e" />
+<img width="960" height="439" alt="image" src="https://github.com/user-attachments/assets/cfa2ef25-f7f3-4fa8-a7f2-1df150a4c366" />
 
 ---
 
