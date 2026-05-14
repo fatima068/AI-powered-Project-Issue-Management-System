@@ -1,8 +1,4 @@
 <?php
-/**
- * ai_client.php — Thin wrapper around the Python/Flask AI service.
- * Drop in project root (alongside connect_db.php).
- */
 
 if (!defined('AI_API_BASE')) {
     define('AI_API_BASE', 'http://127.0.0.1:5001');
@@ -13,7 +9,7 @@ function ai_call($path, $body = null) {
     $ch  = curl_init($url);
 
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT,        30);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
 
     if ($body !== null) {
@@ -25,8 +21,8 @@ function ai_call($path, $body = null) {
         ]);
     }
 
-    $raw  = curl_exec($ch);
-    $err  = curl_error($ch);
+    $raw = curl_exec($ch);
+    $err = curl_error($ch);
     $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
@@ -39,8 +35,8 @@ function ai_call($path, $body = null) {
     $decoded = json_decode($raw, true);
     if (!is_array($decoded)) {
         return [
-            'error'     => 'Malformed response from AI service.',
-            'raw'       => substr($raw, 0, 400),
+            'error' => 'Malformed response from AI service.',
+            'raw' => substr($raw, 0, 400),
             'http_code' => $code,
         ];
     }

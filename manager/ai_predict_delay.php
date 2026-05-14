@@ -7,7 +7,7 @@ include '../assets/homeNavBar.php';
 include '../ai_client.php';
 
 $train_result = null;
-$batch        = null;
+$batch = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['train'])) {
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             foreach ($batch as $p) {
                 if (!isset($p['task_id'])) continue;
-                $tid  = (int)$p['task_id']; $pd = (float)$p['predicted_days'];
+                $tid = (int)$p['task_id']; $pd = (float)$p['predicted_days'];
                 $risk = $p['delay_risk'];   $mis = !empty($p['will_miss_deadline']) ? 1 : 0;
                 $stmt->bind_param("idsi", $tid, $pd, $risk, $mis);
                 $stmt->execute();

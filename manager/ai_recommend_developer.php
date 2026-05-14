@@ -27,8 +27,8 @@ while ($row = mysqli_fetch_assoc($res)) {
     $pid = $row['project_id'];
     if (!isset($tasks_by_project[$pid])) $tasks_by_project[$pid] = [];
     $tasks_by_project[$pid][] = [
-        'id'     => (int)$row['task_id'],
-        'title'  => $row['title'],
+        'id' => (int)$row['task_id'],
+        'title' => $row['title'],
         'status' => $row['status_name'],
     ];
 }
@@ -37,18 +37,18 @@ while ($row = mysqli_fetch_assoc($res)) {
 $result = null;
 $posted_project  = '';
 $posted_priority = '';
-$posted_title    = '';
+$posted_title = '';
 $posted_prereqs  = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $posted_project  = $_POST['project_id']  ?? '';
+    $posted_project = $_POST['project_id']  ?? '';
     $posted_priority = $_POST['priority_id'] ?? '';
-    $posted_title    = trim($_POST['task_title'] ?? '');
-    $posted_prereqs  = $_POST['prerequisite_task_ids'] ?? [];
+    $posted_title = trim($_POST['task_title'] ?? '');
+    $posted_prereqs = $_POST['prerequisite_task_ids'] ?? [];
     if (!is_array($posted_prereqs)) $posted_prereqs = [];
 
     $payload = [
-        'project_id'  => (int)$posted_project,
+        'project_id' => (int)$posted_project,
         'priority_id' => (int)$posted_priority,
         'prerequisite_task_ids' => array_map('intval', $posted_prereqs),
     ];

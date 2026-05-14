@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($selected_project !== '') {
         $result = ai_call('/api/schedule_project', [
-            'project_id'   => (int)$selected_project,
+            'project_id' => (int)$selected_project,
             'dependencies' => $deps_array,
         ]);
     }
